@@ -1,8 +1,7 @@
 #!/bin/bash
-#Created By WO1 Gabriel Garcia
+#Created By Gabriel Garcia
 #Solaris Enumeration Script
-#POC gabriel.a.garcia80.mil@mail.mil or ggarciasnt@gmail.com
-#CPT 155 TEAM White Claw Securi Draco
+#POC or ggarciasnt@gmail.com
 
 read -p "IP Address of ServerIP : " filename 
 
