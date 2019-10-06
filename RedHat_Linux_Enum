@@ -1,0 +1,117 @@
+#!/bin/bash
+#Created By WO1 Gabriel Garcia
+#Solaris Enumeration Script
+#POC gabriel.a.garcia80.mil@mail.mil or ggarciasnt@gmail.com
+#CPT 155 TEAM White Claw Securi Draco
+
+read -p "IP Address of ServerIP : " filename 
+
+#mkdir $./$filename
+#outdir=./$filename\_results_$(date +%d%b%y)@$(date +%H%M)
+outfile=$(hostname)_$filename.txt
+
+seperator()
+{
+echo -e "\n###################################################################\n\n" | tee -a ./$outfile &>/dev/null
+}
+
+echo -e "Script Started at $(date +%d:%b:%y@%H:%M:%S)" | tee -a ./$outfile &/dev/null  
+
+echo -e "--------------------------OUTPUT OF UNAME -A COMMAND-------------------\n" | tee -a ./$outfile &>/dev/null
+uname -a | tee -a $outfile &>/dev/null
+seperator
+
+echo -e "Getting Process Tree"
+echo -e "--------------------------------PROCESS TREE---------------------------\n" | tee -a ./$outfile &>/dev/null
+pstree -gpsu | tee -a ./$outfile &>/dev/null
+echo -e "Getting Running Processes"
+echo -e "----------------------------RUNNNING PROCESSES-------------------------\n" | tee -a ./$outfile &>/dev/null
+ps -elf | tee -a ./$outfile &>/dev/null
+seperator
+
+echo -e "Getting all User Info"
+echo -e "--------------------------USER INFROMATION-----------------------------\n" | tee -a ./$outfile &>/dev/null
+cat /etc/passwd | tee -a ./$outfile &>/dev/null
+echo -e "---------------------------ALL KNOWN USERS-----------------------------\n" | tee -a ./$outfile &>/dev/null
+getent passwd | tee -a ./$outfile &>/dev/null
+echo -e "-----------------------------NEW USERS---------------------------------\n" | tee -a ./$outfile &>/dev/null
+grep 'useradd' /var/log/auth.log | tee -a ./$outfile &>/dev/null
+echo -e "------------------------------SUDOERS----------------------------------\n" | tee -a ./$outfile &>/dev/null
+cat /etc/sudoers | tee -a ./$outfile &>/dev/null
+echo -e "---------------------------LOGGED IN USERS-----------------------------\n" | tee -a ./$outfile &>/dev/null
+who | tee -a ./$outfile &>/dev/null
+seperator
+
+echo -e "Getting all Group Info"
+echo -e "------------------------------GROUPS-----------------------------------\n" | tee -a ./$outfile &>/dev/null
+groups | tee -a ./$outfile &>/dev/null
+cat /etc/group | tee -a ./$outfile &>/dev/null
+seperator
+
+echo -e "----------------------------UID 0 Users--------------------------------\n" | tee -a ./$outfile &>/dev/null
+grep 'x:0:' /etc/passwd | tee -a ./$outfile &>/dev/null
+echo -e "------------------------USERS IN ROOT GROUP----------------------------\n" | tee -a ./$outfile &>/dev/null
+grep root /etc/group | tee -a ./$outfile &>/dev/null
+seperator
+
+echo -e "Getting Network information"
+echo -e "-------------------------NETWORK CONNECTIONS---------------------------\n" | tee -a ./$outfile &>/dev/null
+echo -e "-------------------------------IFCONFIG--------------------------------\n" | tee -a ./$outfile &>/dev/null
+ifconfig -a | tee -a ./$outfile &>/dev/null
+seperator
+
+echo -e "--------------------------------NETSTATS-------------------------------\n" | tee -a ./$outfile &>/dev/null
+netstat -ano | grep -e ESTABLISHED -e LISTEN | tee -a $outfile &>/dev/null
+seperator
+
+echo -e " ------------------ETC Resolve.Conf and ETC HOSTS----------------------\n" | tee -a ./$outfile &>/dev/null
+cat /etc/hosts | tee -a ./$outfile &>/dev/null
+seperator
+cat /etc/resolv.conf | tee -a ./$outfile &>/dev/null
+
+echo -e "----------------------------FILES AND DIRs-----------------------------\n" | tee -a ./$outfile &>/dev/null
+echo -e "Enumerating Files and Directories"
+find / -mtime -10 -ls 2>/dev/null | tee -a ./$(hostname)_modded_files.txt &>/dev/null
+echo -e "---------------IMMUTABLE FILES AND DIRECTORIES-------------------------\n" | tee -a ./$outfile &>/dev/null
+lsattr -a -R 2>/dev/null / | grep -P "(?<=-)i(?=-).* " | tee -a ./$outfile &>/dev/null
+
+echo -e "-------------------------------SUID and GUID FILES---------------------\n" | tee -a ./$outfile &>/dev/null
+find / -type f -perm /4000 2>/dev/null | tee -a ./$outfile &>/dev/null
+find / -type f -perm /2000 2>/dev/null | tee -a ./$outfile &>/dev/null
+
+echo -e "--------------------------HIDDEN FILES---------------------------------\n" | tee -a ./$outfile &>/dev/null
+find / -type f -iname ".*" -ls | tee -a ./$outfile &>/dev/null
+
+echo -e "---------------------------------Crontab-------------------------------\n" | tee -a ./$outfile &>/dev/null
+cat /etc/crontab | tee -a ./$outfile &>/dev/null
+
+echo -e "------------------------------RC START SCRIPTS-------------------------\n" | tee -a ./$outfile &>/dev/null
+find / \( -name "rc*.d" -o -name "rc.local" -o -name "intd" \) -ls 2>/dev/null | tee -a ./$outfile &>/dev/null
+
+echo -e "-----------------------------FILES AND DIRs WITHOUT OWNERSHIP----------\n" | tee -a ./$outfile &>/dev/null
+find / -group nobody 2>/dev/null | tee -a ./$outfile &>/dev/null
+find / -user nobody 2>/dev/null | tee -a ./$outfile &>/dev/null
+
+echo -e "----------------------WORLD WRITABLE AND DIRECTORIES-------------------\n" | tee -a ./$outfile &>/dev/null
+find / -perm -0002 -type d -print 2>/dev/null | tee -a ./$outfile &>/dev/null
+find / -perm -0002 -type f -print 2>/dev/null | tee -a ./$outfile &>/dev/null
+seperator
+
+echo -e "------------------------------LOGS ZEROED OUT--------------------------\n" | tee -a ./$outfile &>/dev/null
+find / -size 0 -name \*.log -ls 2>/dev/null | tee -a ./$outfile &>/dev/null
+
+echo -e "------------------------------LOG TAMPERING----------------------------\n" | tee -a ./$outfile &>/dev/null
+ls -lisa /var/log | tee -a ./$outfile &>/dev/null
+echo -e "------------------------------AUTH FAILURE-----------------------------\n" | tee -a ./$outfile &>/dev/null
+grep "authentication failure" /var/log/auth.log | tee -a ./$outfile &>/dev/null
+echo -e "------------------------------INVALID USERS----------------------------\n" | tee -a ./$outfile &>/dev/null
+grep "invalid user" /var/log/auth.log | tee -a ./$outfile &>/dev/null
+
+
+echo -e "Enumerating Mounts and Partitions"
+echo -e "-----------------------------MOUNTS AND PARTITIONS---------------------\n" | tee -a ./$outfile &>/dev/null
+df -a | tee -a ./$outfile &>/dev/null
+
+
+echo -e "/nDone/n"
+echo -e "Script Finished at $(date +%d:%b:%y@%H:%M:%S)"
